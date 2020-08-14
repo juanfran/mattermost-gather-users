@@ -12,9 +12,9 @@ var manifest *model.Manifest
 
 const manifestStr = `
 {
-  "id": "com.mattermost.plugin-starter-template",
-  "name": "Plugin Starter Template",
-  "description": "This plugin serves as a starting point for writing a Mattermost plugin.",
+  "id": "gather-users",
+  "name": "Gather users",
+  "description": "This plugin pair two user to chat.",
   "version": "0.1.0",
   "min_server_version": "5.12.0",
   "server": {
@@ -25,13 +25,33 @@ const manifestStr = `
     },
     "executable": ""
   },
-  "webapp": {
-    "bundle_path": "webapp/dist/main.js"
-  },
   "settings_schema": {
     "header": "",
     "footer": "",
-    "settings": []
+    "settings": [
+      {
+        "key": "cron",
+        "display_name": "Recurrence",
+        "type": "dropdown",
+        "help_text": "",
+        "placeholder": "",
+        "default": null,
+        "options": [
+          {
+            "display_name": "Weekly",
+            "value": "weekly"
+          },
+          {
+            "display_name": "Daily",
+            "value": "daily"
+          },
+          {
+            "display_name": "Monthly",
+            "value": "montly"
+          }
+        ]
+      }
+    ]
   }
 }
 `

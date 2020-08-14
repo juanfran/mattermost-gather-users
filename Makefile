@@ -39,13 +39,6 @@ apply:
 
 ## Runs eslint and golangci-lint
 .PHONY: check-style
-check-style: webapp/node_modules
-	@echo Checking for style guide compliance
-
-ifneq ($(HAS_WEBAPP),)
-	cd webapp && npm run lint
-	cd webapp && npm run check-types
-endif
 
 ifneq ($(HAS_SERVER),)
 	@if ! [ -x "$$(command -v golangci-lint)" ]; then \
@@ -75,24 +68,6 @@ else
 endif
 endif
 
-## Ensures NPM dependencies are installed without having to run this all the time.
-webapp/node_modules: webapp/package.json
-ifneq ($(HAS_WEBAPP),)
-	cd webapp && $(NPM) install
-	touch $@
-endif
-
-## Builds the webapp, if it exists.
-.PHONY: webapp
-webapp: webapp/node_modules
-ifneq ($(HAS_WEBAPP),)
-ifeq ($(MM_DEBUG),)
-	cd webapp && $(NPM) run build;
-else
-	cd webapp && $(NPM) run debug;
-endif
-endif
-
 ## Generates a tar bundle of the plugin for install.
 .PHONY: bundle
 bundle:
@@ -119,7 +94,7 @@ endif
 
 ## Builds and bundles the plugin.
 .PHONY: dist
-dist:	apply server webapp bundle
+dist:	apply server bundle
 
 ## Builds and installs the plugin to a server.
 .PHONY: deploy
@@ -182,12 +157,8 @@ detach: setup-attach
 
 ## Runs any lints and unit tests defined for the server and webapp, if they exist.
 .PHONY: test
-test: webapp/node_modules
 ifneq ($(HAS_SERVER),)
 	$(GO) test -v $(GO_TEST_FLAGS) ./server/...
-endif
-ifneq ($(HAS_WEBAPP),)
-	cd webapp && $(NPM) run test;
 endif
 
 ## Creates a coverage report for the server code.
@@ -196,17 +167,6 @@ coverage: webapp/node_modules
 ifneq ($(HAS_SERVER),)
 	$(GO) test $(GO_TEST_FLAGS) -coverprofile=server/coverage.txt ./server/...
 	$(GO) tool cover -html=server/coverage.txt
-endif
-
-## Extract strings for translation from the source code.
-.PHONY: i18n-extract
-i18n-extract:
-ifneq ($(HAS_WEBAPP),)
-ifeq ($(HAS_MM_UTILITIES),)
-	@echo "You must clone github.com/mattermost/mattermost-utilities repo in .. to use this command"
-else
-	cd $(MM_UTILITIES_DIR) && npm install && npm run babel && node mmjstool/build/index.js i18n extract-webapp --webapp-dir $(PWD)/webapp
-endif
 endif
 
 ## Disable the plugin.
@@ -242,12 +202,6 @@ ifneq ($(HAS_SERVER),)
 	rm -fr server/coverage.txt
 	rm -fr server/dist
 endif
-ifneq ($(HAS_WEBAPP),)
-	rm -fr webapp/junit.xml
-	rm -fr webapp/dist
-	rm -fr webapp/node_modules
-endif
-	rm -fr build/bin/
 
 # Help documentation à la https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help:
