@@ -35,19 +35,19 @@ const manifestStr = `
         "type": "dropdown",
         "help_text": "",
         "placeholder": "",
-        "default": null,
+        "default": "@weekly",
         "options": [
           {
             "display_name": "Weekly",
-            "value": "weekly"
+            "value": "@weekly"
           },
           {
             "display_name": "Daily",
-            "value": "daily"
+            "value": "@daily"
           },
           {
             "display_name": "Monthly",
-            "value": "montly"
+            "value": "@montly"
           }
         ]
       }
