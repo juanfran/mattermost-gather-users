@@ -86,7 +86,7 @@ func (p *Plugin) addCronFunc() {
 
 	// every minute "* * * * *"
 	p.cronEntryID, _ = p.cron.AddFunc(configCron, func() {
-		runMeetings(p)
+		p.runMeetings()
 	})
 }
 
@@ -115,7 +115,7 @@ func remove(slice []string, toRemove string) []string {
 	return slice
 }
 
-func runMeetings(p *Plugin) {
+func (p *Plugin) runMeetings() {
 	p.meetInCron = []string{}
 	shuffleUsers(p.users)
 
@@ -229,6 +229,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 			msg = "Gather plugin deactivate."
 
 			p.users = remove(p.users, args.UserId)
+			p.meetInCron = remove(p.meetInCron, args.UserId)
 			p.usersMeetings = removeUserMeetings(p.usersMeetings, args.UserId)
 		} else if !contains(p.users, args.UserId) {
 			p.users = append(p.users, args.UserId)
