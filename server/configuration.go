@@ -18,7 +18,8 @@ import (
 // If you add non-reference types to your configuration struct, be sure to rewrite Clone as a deep
 // copy appropriate for your types.
 type configuration struct {
-	cron string
+	Cron     string
+	InitText string
 }
 
 // Clone shallow copies the configuration. Your implementation may require a deep copy if
@@ -78,7 +79,21 @@ func (p *Plugin) OnConfigurationChange() error {
 		return errors.Wrap(err, "failed to load plugin configuration")
 	}
 
+	dirtyCron := false
+
+	if p.cronEntryID != 0 {
+		conf := p.getConfiguration()
+
+		if conf.Cron != configuration.Cron {
+			dirtyCron = true
+		}
+	}
+
 	p.setConfiguration(configuration)
+
+	if dirtyCron {
+		p.refreshCron(p.getConfiguration())
+	}
 
 	return nil
 }

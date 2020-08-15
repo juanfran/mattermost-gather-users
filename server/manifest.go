@@ -30,7 +30,7 @@ const manifestStr = `
     "footer": "",
     "settings": [
       {
-        "key": "cron",
+        "key": "Cron",
         "display_name": "Recurrence",
         "type": "dropdown",
         "help_text": "",
@@ -50,6 +50,14 @@ const manifestStr = `
             "value": "@montly"
           }
         ]
+      },
+      {
+        "key": "InitText",
+        "display_name": "Initial text",
+        "type": "text",
+        "help_text": "",
+        "placeholder": "",
+        "default": "Let's chat!"
       }
     ]
   }

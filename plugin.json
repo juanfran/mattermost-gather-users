@@ -16,7 +16,7 @@
         "footer": "",
         "settings": [
             {
-                "key": "cron",
+                "key": "Cron",
                 "display_name": "Recurrence",
                 "type": "dropdown",
                 "default": "@weekly",
@@ -34,6 +34,12 @@
                         "value": "@montly"
                     }
                 ]
+            },
+            {
+                "key": "InitText",
+                "display_name": "Initial text",
+                "type": "text",
+                "default": "Let's chat!"
             }
         ]
     }

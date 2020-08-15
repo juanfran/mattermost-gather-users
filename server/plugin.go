@@ -23,11 +23,14 @@ type Plugin struct {
 	// setConfiguration for usage.
 	configuration *configuration
 
-	cron          *cron.Cron
-	cronEntryID   cron.EntryID
+	cron        *cron.Cron
+	cronEntryID cron.EntryID
+
 	users         []string
 	usersMeetings []Meeting
 	meetInCron    []string
+
+	botUserID string
 }
 
 // Meeting the way to store meeting
@@ -38,25 +41,46 @@ type Meeting struct {
 
 // OnActivate activate pluguin
 func (p *Plugin) OnActivate() error {
-	config := p.getConfiguration()
-
 	c := cron.New()
 	p.cron = c
 	p.cron.Start()
-	configCron := config.cron
 
-	if configCron == "" {
-		configCron = "@weekly"
+	p.addCronFunc()
+
+	bot := &model.Bot{
+		Username:    "gather-users",
+		DisplayName: "gatherUsers",
+	}
+	botUserID, ensureBotErr := p.Helpers.EnsureBot(bot)
+
+	if ensureBotErr != nil {
+		return ensureBotErr
 	}
 
-	p.cronEntryID, _ = c.AddFunc("* * * * *", func() {
-		runMeetings(p)
-	})
+	p.botUserID = botUserID
 
 	return p.API.RegisterCommand(&model.Command{
 		Trigger:          "gather-plugin",
 		AutoComplete:     true,
 		AutoCompleteDesc: "Available commands: on, off",
+	})
+}
+
+func (p *Plugin) refreshCron(configuration *configuration) {
+	p.cron.Remove(p.cronEntryID)
+	p.addCronFunc()
+}
+
+func (p *Plugin) addCronFunc() {
+	config := p.getConfiguration()
+	configCron := config.Cron
+
+	if configCron == "" {
+		configCron = "@weekly"
+	}
+
+	p.cronEntryID, _ = p.cron.AddFunc("* * * * *", func() {
+		runMeetings(p)
 	})
 }
 
@@ -168,7 +192,20 @@ func meetingExist(meetings []Meeting, userID string, pairUserID string) bool {
 func startMeeting(p *Plugin, userID string, pairUserID string) {
 	p.usersMeetings = append(p.usersMeetings, Meeting{userID, pairUserID})
 	p.meetInCron = append(p.meetInCron, userID, pairUserID)
-	fmt.Println("|||| Starting meeting between " + userID + " and " + pairUserID)
+
+	users := []string{p.botUserID, userID, pairUserID}
+
+	channel, _ := p.API.GetGroupChannel(users)
+
+	config := p.getConfiguration()
+
+	post := &model.Post{
+		UserId:    p.botUserID,
+		ChannelId: channel.Id,
+		Message:   config.InitText,
+	}
+
+	p.API.CreatePost(post)
 }
 
 // OnDeactivate desativate plugin
