@@ -38,12 +38,12 @@ const manifestStr = `
         "default": "@weekly",
         "options": [
           {
-            "display_name": "Weekly",
-            "value": "@weekly"
-          },
-          {
             "display_name": "Daily",
             "value": "@daily"
+          },
+          {
+            "display_name": "Weekly",
+            "value": "@weekly"
           },
           {
             "display_name": "Monthly",
@@ -58,6 +58,14 @@ const manifestStr = `
         "help_text": "",
         "placeholder": "",
         "default": "Let's chat!"
+      },
+      {
+        "key": "FirstMeeting",
+        "display_name": "Start chats on sign in",
+        "type": "bool",
+        "help_text": "If this is activated when the user type '/gather-plugin on' the plugin try to find a meeting instead of waiting to the next one.",
+        "placeholder": "",
+        "default": false
       }
     ]
   }

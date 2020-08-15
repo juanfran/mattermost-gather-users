@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 	"strings"
 	"sync"
@@ -66,6 +65,12 @@ func (p *Plugin) OnActivate() error {
 	})
 }
 
+// UserHasLeftTeam one user left the team
+func (p *Plugin) UserHasLeftTeam(c *plugin.Context, teamMember *model.TeamMember) {
+	p.users = remove(p.users, teamMember.UserId)
+	p.usersMeetings = removeUserMeetings(p.usersMeetings, teamMember.UserId)
+}
+
 func (p *Plugin) refreshCron(configuration *configuration) {
 	p.cron.Remove(p.cronEntryID)
 	p.addCronFunc()
@@ -79,7 +84,8 @@ func (p *Plugin) addCronFunc() {
 		configCron = "@weekly"
 	}
 
-	p.cronEntryID, _ = p.cron.AddFunc("* * * * *", func() {
+	// every minute "* * * * *"
+	p.cronEntryID, _ = p.cron.AddFunc(configCron, func() {
 		runMeetings(p)
 	})
 }
@@ -110,8 +116,6 @@ func remove(slice []string, toRemove string) []string {
 }
 
 func runMeetings(p *Plugin) {
-	fmt.Println("|||| Meetings starting")
-
 	p.meetInCron = []string{}
 	shuffleUsers(p.users)
 
@@ -225,11 +229,14 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 			msg = "Gather plugin deactivate."
 
 			p.users = remove(p.users, args.UserId)
+			p.usersMeetings = removeUserMeetings(p.usersMeetings, args.UserId)
 		} else if !contains(p.users, args.UserId) {
 			p.users = append(p.users, args.UserId)
 
+			config := p.getConfiguration()
+
 			// meet now only if the user has no previous meetings
-			if !userHasMeetings(p.usersMeetings, args.UserId) {
+			if config.FirstMeeting && !userHasMeetings(p.usersMeetings, args.UserId) {
 				userToMeet, ok := findUserToMeet(p, args.UserId)
 
 				if ok {
