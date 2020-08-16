@@ -84,6 +84,10 @@ func (p *Plugin) addCronFunc() {
 		configCron = "@weekly"
 	}
 
+	if config.Cron == "custom" && len(config.CustomCron) > 0 {
+		configCron = config.CustomCron
+	}
+
 	// every minute "* * * * *"
 	p.cronEntryID, _ = p.cron.AddFunc(configCron, func() {
 		p.runMeetings()

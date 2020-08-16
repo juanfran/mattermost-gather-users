@@ -15,7 +15,7 @@ const manifestStr = `
   "id": "gather-users",
   "name": "Gather users",
   "description": "This plugin pair two user to chat.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "min_server_version": "5.12.0",
   "server": {
     "executables": {
@@ -52,8 +52,20 @@ const manifestStr = `
           {
             "display_name": "Monthly",
             "value": "@monthly"
+          },
+          {
+            "display_name": "Custom",
+            "value": "custom"
           }
         ]
+      },
+      {
+        "key": "CustomCron",
+        "display_name": "Cron expression",
+        "type": "text",
+        "help_text": "Select custom recurrence a set a valid cron expression",
+        "placeholder": "",
+        "default": null
       },
       {
         "key": "InitText",
@@ -67,7 +79,7 @@ const manifestStr = `
         "key": "FirstMeeting",
         "display_name": "Start chats on sign in",
         "type": "bool",
-        "help_text": "If this is activated when the user type '/gather-plugin on' the plugin try to find a meeting instead of waiting to the next one.",
+        "help_text": "If this is activated when the user type '/gather-plugin on' the plugin try to find a meeting instead of waiting to the next scheduled.",
         "placeholder": "",
         "default": false
       }

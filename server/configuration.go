@@ -19,6 +19,7 @@ import (
 // copy appropriate for your types.
 type configuration struct {
 	Cron         string
+	CustomCron   string
 	InitText     string
 	FirstMeeting bool
 }
