@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"math/rand"
 	"strings"
 	"sync"
@@ -57,6 +59,20 @@ func (p *Plugin) OnActivate() error {
 	}
 
 	p.botUserID = botUserID
+
+	// Deserialize user data
+	userData, err := p.API.KVGet("users")
+	if err != nil {
+		return err
+	}
+	if userData != nil {
+		var users []string
+		err := json.Unmarshal(userData, &users)
+		if err != nil {
+			return err
+		}
+		p.users = users;
+	}
 
 	return p.API.RegisterCommand(&model.Command{
 		Trigger:          "gather-plugin",
@@ -216,10 +232,27 @@ func startMeeting(p *Plugin, userID string, pairUserID string) {
 	p.API.CreatePost(post)
 }
 
-// OnDeactivate desativate plugin
+// OnDeactivate deactivate plugin
 func (p *Plugin) OnDeactivate() error {
 	p.cron.Remove(p.cronEntryID)
 	p.cron.Stop()
+
+	// Persist currently signed-up users
+	userData, err := json.Marshal(p.users)
+	if err != nil {
+		p.API.LogError(fmt.Sprintf("Failed to serialize users: %s", err.Error()))
+		return err
+	}
+
+	// Cannot reuse `err` here, because `KVSet` returns a pointer, not an interface,
+	// which when cast to the `error` interface of `err`, will result in a non-nil value.
+	err2 := p.API.KVSet("users", userData)
+
+	if err2 != nil {
+		p.API.LogError(fmt.Sprintf("Failed to persist users: %s", err2.Error()))
+		return err2
+	}
+
 	return nil
 }
 
