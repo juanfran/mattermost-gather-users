@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -308,15 +309,21 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 			}, nil
 		}
 
-		var msg strings.Builder
-
-		msg.WriteString("Users signed up for coffee meetings:\n")
+		var lines []string
 		for _, userId := range p.users {
 			user, err := p.API.GetUser(userId)
 			if err != nil {
 				return nil, err
 			}
-			msg.WriteString(fmt.Sprintf(" - %s %s (@%s)\n", user.FirstName, user.LastName, user.Username))
+			lines = append(lines, fmt.Sprintf(" - %s %s (@%s)\n", user.FirstName, user.LastName, user.Username))
+		}
+
+		sort.Strings(lines)
+
+		var msg strings.Builder
+		msg.WriteString("Users signed up for coffee meetings:\n")
+		for _, line := range lines {
+			msg.WriteString(line)
 		}
 
 		return &model.CommandResponse{
