@@ -226,16 +226,14 @@ func (p *Plugin) OnDeactivate() error {
 // ExecuteCommand run command
 func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 	split := strings.Fields(args.Command)
-	if len(split) > 1 && (split[1] == "on" || split[1] == "off") {
-		msg := "Gather plugin activate, wait for a meeting."
 
-		if split[1] == "off" {
-			msg = "Gather plugin deactivate."
+	if len(split) <= 1 {
+		// Invalid invocation, needs at least one sub-command
+		return &model.CommandResponse{}, nil
+	}
 
-			p.users = remove(p.users, args.UserId)
-			p.meetInCron = remove(p.meetInCron, args.UserId)
-			p.usersMeetings = removeUserMeetings(p.usersMeetings, args.UserId)
-		} else if !contains(p.users, args.UserId) {
+	if split[1] == "on" {
+		if !contains(p.users, args.UserId) {
 			p.users = append(p.users, args.UserId)
 
 			config := p.getConfiguration()
@@ -252,7 +250,32 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         msg,
+			Text:         "Gather plugin activate, wait for a meeting.",
+		}, nil
+	} else if split[1] == "off" {
+		p.users = remove(p.users, args.UserId)
+		p.meetInCron = remove(p.meetInCron, args.UserId)
+		p.usersMeetings = removeUserMeetings(p.usersMeetings, args.UserId)
+
+		return &model.CommandResponse{
+			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+			Text:         "Gather plugin deactivate.",
+		}, nil
+	} else if split[1] == "info" {
+		var msg strings.Builder
+
+		msg.WriteString("Users signed up for coffee meetings:\n")
+		for _, userId := range p.users {
+			user, err := p.API.GetUser(userId)
+			if err != nil {
+				return nil, err
+			}
+			msg.WriteString(fmt.Sprintf(" - %s %s (@%s)\n", user.FirstName, user.LastName, user.Username))
+		}
+
+		return &model.CommandResponse{
+			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+			Text:         msg.String(),
 		}, nil
 	}
 
