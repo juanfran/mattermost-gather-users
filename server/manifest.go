@@ -82,6 +82,14 @@ const manifestStr = `
         "help_text": "If this is activated when the user type '/gather-plugin on' the plugin try to find a meeting instead of waiting to the next scheduled.",
         "placeholder": "",
         "default": false
+      },
+      {
+        "key": "AllowInfoForEveryone",
+        "display_name": "Info for Everyone",
+        "type": "bool",
+        "help_text": "If this is activated, any user can type '/gather-plugin info' to see who is currently signed up. Otherwise, only system users can.",
+        "placeholder": "",
+        "default": false
       }
     ]
   }

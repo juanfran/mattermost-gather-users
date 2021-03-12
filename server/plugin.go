@@ -295,6 +295,19 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 			Text:         "Gather plugin deactivate.",
 		}, nil
 	} else if split[1] == "info" {
+		config := p.getConfiguration()
+		caller, err := p.API.GetUser(args.UserId)
+		if err != nil {
+			return nil, err
+		}
+
+		if !(config.AllowInfoForEveryone || caller.IsSystemAdmin()) {
+			return &model.CommandResponse{
+				ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+				Text:         "Only system admins can do this.",
+			}, nil
+		}
+
 		var msg strings.Builder
 
 		msg.WriteString("Users signed up for coffee meetings:\n")
