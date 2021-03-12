@@ -233,11 +233,7 @@ func startMeeting(p *Plugin, userID string, pairUserID string) {
 	p.API.CreatePost(post)
 }
 
-// OnDeactivate deactivate plugin
-func (p *Plugin) OnDeactivate() error {
-	p.cron.Remove(p.cronEntryID)
-	p.cron.Stop()
-
+func (p *Plugin) persistUsers() error {
 	// Persist currently signed-up users
 	userData, err := json.Marshal(p.users)
 	if err != nil {
@@ -253,8 +249,15 @@ func (p *Plugin) OnDeactivate() error {
 		p.API.LogError(fmt.Sprintf("Failed to persist users: %s", err2.Error()))
 		return err2
 	}
-
 	return nil
+}
+
+// OnDeactivate deactivate plugin
+func (p *Plugin) OnDeactivate() error {
+	p.cron.Remove(p.cronEntryID)
+	p.cron.Stop()
+
+	return p.persistUsers()
 }
 
 // ExecuteCommand run command
@@ -265,6 +268,8 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 		// Invalid invocation, needs at least one sub-command
 		return &model.CommandResponse{}, nil
 	}
+
+	msg := "This command is not supported"
 
 	if split[1] == "on" {
 		if !contains(p.users, args.UserId) {
@@ -281,20 +286,13 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 				}
 			}
 		}
-
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "Gather plugin activate, wait for a meeting.",
-		}, nil
+		msg = "Gather plugin activate, wait for a meeting."
 	} else if split[1] == "off" {
 		p.users = remove(p.users, args.UserId)
 		p.meetInCron = remove(p.meetInCron, args.UserId)
 		p.usersMeetings = removeUserMeetings(p.usersMeetings, args.UserId)
 
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "Gather plugin deactivate.",
-		}, nil
+		msg = "Gather plugin deactivate."
 	} else if split[1] == "info" {
 		config := p.getConfiguration()
 		caller, err := p.API.GetUser(args.UserId)
@@ -320,17 +318,24 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 
 		sort.Strings(lines)
 
-		var msg strings.Builder
-		msg.WriteString("Users signed up for coffee meetings:\n")
+		var msgBuilder strings.Builder
+		msgBuilder.WriteString("Users signed up for coffee meetings:\n")
 		for _, line := range lines {
-			msg.WriteString(line)
+			msgBuilder.WriteString(line)
 		}
-
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         msg.String(),
-		}, nil
+		msg = msgBuilder.String()
 	}
 
-	return &model.CommandResponse{}, nil
+	if split[1] == "on" || split[1] == "off" {
+		// Save users when list changed
+		err := p.persistUsers()
+		if err != nil {
+			msg += "\nFailed to save list of users, contact your administrator."
+		}
+	}
+
+	return &model.CommandResponse{
+		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+		Text:         msg,
+	}, nil
 }
