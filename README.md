@@ -20,3 +20,11 @@ In any channel you can use the following command. By default you are not going t
 
 - `/gather-plugin on` - You are available to meet, you have to wait until the the plugin assign you a partner to talk.
 - `/gather-plugin off` - You don't want to participate in the next recurring meetings.
+
+## Admin commands
+
+- `/gather-plugin info` - List users that are using the `gather-user`.
+- `/gather-plugin add @mention` - Add user.
+- `/gather-plugin remove @mention` - Remove user.
+- `/gather-plugin meetings` - Print a JSON string with the previous meetings
+- `/gather-plugin set_meetings [{"user1":"Bruce","user2":"Martha"}]` - Set the meetings that have are already happened.
