@@ -478,7 +478,7 @@ func (p *Plugin) OnDeactivate() error {
 // ExecuteCommand run command
 func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 	split := strings.Fields(args.Command)
-	adminCommands := []string{"info", "add", "remove", "meetings", "set_meetings"}
+	adminCommands := []string{"add", "remove", "meetings", "set_meetings"}
 
 	caller, err := p.API.GetUser(args.UserId)
 	if err != nil {
@@ -510,6 +510,33 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 		p.paused = append(p.paused, args.UserId)
 		p.persistPausedUsers()
 		msg = "Gather plugin paused."
+	} else if split[1] == "info" {
+		config := p.getConfiguration()
+
+		if !caller.IsSystemAdmin() && !config.AllowInfoForEveryone  {
+			return &model.CommandResponse{
+				ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+				Text:         "Only system admins can do this.",
+			}, nil
+		}
+
+		var lines []string
+		for _, userId := range p.users {
+			user, err := p.API.GetUser(userId)
+			if err != nil {
+				return nil, err
+			}
+			lines = append(lines, fmt.Sprintf(" - %s %s (@%s)\n", user.FirstName, user.LastName, user.Username))
+		}
+
+		sort.Strings(lines)
+
+		var msgBuilder strings.Builder
+		msgBuilder.WriteString("Users signed up for coffee meetings:\n")
+		for _, line := range lines {
+			msgBuilder.WriteString(line)
+		}
+		msg = msgBuilder.String()
 	} else if contains(adminCommands, split[1]) {
 		if !caller.IsSystemAdmin() {
 			return &model.CommandResponse{
@@ -518,34 +545,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 			}, nil
 		}
 
-		if split[1] == "info" {
-			config := p.getConfiguration()
-
-			if !config.AllowInfoForEveryone {
-				return &model.CommandResponse{
-					ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-					Text:         "Only system admins can do this.",
-				}, nil
-			}
-
-			var lines []string
-			for _, userId := range p.users {
-				user, err := p.API.GetUser(userId)
-				if err != nil {
-					return nil, err
-				}
-				lines = append(lines, fmt.Sprintf(" - %s %s (@%s)\n", user.FirstName, user.LastName, user.Username))
-			}
-
-			sort.Strings(lines)
-
-			var msgBuilder strings.Builder
-			msgBuilder.WriteString("Users signed up for coffee meetings:\n")
-			for _, line := range lines {
-				msgBuilder.WriteString(line)
-			}
-			msg = msgBuilder.String()
-		} else if split[1] == "add" {
+		if split[1] == "add" {
 			for _, v := range args.UserMentions {
 				p.addUser(v)
 			}
