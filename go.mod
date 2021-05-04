@@ -1,4 +1,4 @@
-module github.com/mattermost/mattermost-plugin-starter-template
+module github.com/juanfran/mattermost-gather-users
 
 go 1.12
 
