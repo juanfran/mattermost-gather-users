@@ -27,7 +27,10 @@ type Plugin struct {
 	users         []string
 	paused         []string
 	usersMeetings map[string][]string
+	oddUserTurn []string
+
 	meetInCron    []string
+	oddUserInCron string
 
 	botUserID string
 }
@@ -86,13 +89,33 @@ func (p *Plugin) printMeetInCron() {
 	fmt.Println("printMeetInCron", result)
 }
 
+func (p *Plugin) fillOddUserTurnList() {
+	for _, userId := range p.users {
+		if !utils.Contains(p.oddUserTurn, userId) {
+			p.oddUserTurn = append(p.oddUserTurn, userId)
+		}
+	}
+}
+
 func (p *Plugin) runMeetings() {
 	p.cleanUsers()
 
 	p.meetInCron = []string{}
+	p.oddUserInCron = ""
+	usersWithoutPendingMeetings := []string{}
 
 	availableUsers := p.getAvailableUsers()
-	usersWithoutPendingMeetings := []string{}
+	isOdd := (len(availableUsers) % 2) != 0
+
+	if isOdd {
+		p.fillOddUserTurnList()
+		p.oddUserInCron = p.oddUserTurn[0]
+		p.oddUserTurn = utils.Remove(p.oddUserTurn, p.oddUserInCron)
+		p.oddUserTurn = append(p.oddUserTurn, p.oddUserInCron)
+		p.persistOddUserTurn()
+	}
+
+	availableUsers = p.getAvailableUsers()
 
 	utils.ShuffleUsers(availableUsers)
 
@@ -139,7 +162,7 @@ func (p *Plugin) userHasMeetings(userID string) bool {
 
 func (p *Plugin) removeUserMeetings(userID string) {
 	for _, i := range p.users {
-		p.usersMeetings[i] = utils.RemoveUserMeeting(p.usersMeetings[i], userID)
+		p.usersMeetings[i] = utils.Remove(p.usersMeetings[i], userID)
 	}
 
 	delete(p.usersMeetings, userID);
@@ -149,7 +172,7 @@ func (p *Plugin) getAvailableUsers() []string {
 	var users []string
 
 	for _, userId := range p.users {
-		if !utils.Contains(p.paused, userId) {
+		if !utils.Contains(p.paused, userId) && userId != p.oddUserInCron {
 			users = append(users, userId)
 		}
 	}
@@ -247,10 +270,10 @@ func  (p *Plugin) usersMeetingsByUsername() map[string][]string {
 }
 
 func (p *Plugin) startMeeting(userID string, pairUserID string) {
-	newUserMeetings := utils.RemoveUserMeeting(p.usersMeetings[userID], pairUserID)
+	newUserMeetings := utils.Remove(p.usersMeetings[userID], pairUserID)
 	p.usersMeetings[userID] = append(newUserMeetings, pairUserID)
 
-	newUserMeetings = utils.RemoveUserMeeting(p.usersMeetings[pairUserID], userID)
+	newUserMeetings = utils.Remove(p.usersMeetings[pairUserID], userID)
 	p.usersMeetings[pairUserID] = append(newUserMeetings, userID)
 
 	p.meetInCron = append(p.meetInCron, userID, pairUserID)

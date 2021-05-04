@@ -29,15 +29,3 @@ func Remove(slice []string, toRemove string) []string {
 
 	return slice
 }
-
-func RemoveUserMeeting(meetings []string, userID string) []string {
-	var result []string
-
-	for _, user := range meetings {
-		if user != userID {
-			result = append(result, user)
-		}
-	}
-
-	return result
-}

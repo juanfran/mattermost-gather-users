@@ -61,3 +61,22 @@ func (p *Plugin) persistMeetings() error {
 	}
 	return nil
 }
+
+func (p *Plugin) persistOddUserTurn() error {
+	// Persist currently signed-up meetings
+	oddUserTurn, err := json.Marshal(p.oddUserTurn)
+	if err != nil {
+		p.API.LogError(fmt.Sprintf("Failed to serialize users oddUserTurn: %s", err.Error()))
+		return err
+	}
+
+	// Cannot reuse `err` here, because `KVSet` returns a pointer, not an interface,
+	// which when cast to the `error` interface of `err`, will result in a non-nil value.
+	err2 := p.API.KVSet("oddUserTurn", oddUserTurn)
+
+	if err2 != nil {
+		p.API.LogError(fmt.Sprintf("Failed to persist users oddUserTurn: %s", err2.Error()))
+		return err2
+	}
+	return nil
+}

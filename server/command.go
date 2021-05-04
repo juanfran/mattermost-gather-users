@@ -14,7 +14,7 @@ import (
 // ExecuteCommand run command
 func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 	split := strings.Fields(args.Command)
-	adminCommands := []string{"add", "remove", "meetings", "set_meetings"}
+	adminCommands := []string{"add", "remove", "meetings", "set_meetings", "odd", "set_odd"}
 
 	caller, err := p.API.GetUser(args.UserId)
 	if err != nil {
@@ -99,6 +99,40 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 			output, _ := json.Marshal(mettings)
 
 			msg = "```" + string(output) + "```"
+		} else if split[1] == "odd" {
+			var users []string
+
+			for _, userId := range p.oddUserTurn {
+				user, err := p.API.GetUser(userId)
+				if err != nil {
+					return nil, err
+				}
+				users = append(users, user.Username)
+			}
+
+			output, _ := json.Marshal(users)
+
+			msg = "```" + string(output) + "```"
+		} else if split[1] == "set_odd" {
+			byt := []byte(split[2])
+			var dat []string
+			var oddUserTurn []string
+
+			if err := json.Unmarshal(byt, &dat); err != nil {
+				msg += "\nFailed parsing json."
+			} else {
+				for _, userName := range dat {
+					user, _ := p.API.GetUserByUsername(userName)
+					if user != nil {
+						oddUserTurn = append(oddUserTurn, user.Id)
+					}
+				}
+
+				p.oddUserTurn = oddUserTurn
+				p.persistOddUserTurn()
+
+				msg = "oddUserTurn setted"
+			}
 		} else if split[1] == "set_meetings" {
 			byt := []byte(split[2])
 			dat := make(map[string][]string)

@@ -75,6 +75,24 @@ func (p *Plugin) OnActivate() error {
 		}
 	}
 
+	// Deserialize oddUserTurn data
+	oddUserTurnData, err := p.API.KVGet("oddUserTurn")
+	if err != nil {
+		return err
+	}
+
+	p.oddUserTurn = []string{}
+
+	if oddUserTurnData != nil {
+		oddUserTurn := []string{}
+		err := json.Unmarshal(oddUserTurnData, &oddUserTurn)
+		if err != nil {
+			p.oddUserTurn = []string{}
+		} else {
+			p.oddUserTurn = oddUserTurn;
+		}
+	}
+
 	return p.API.RegisterCommand(&model.Command{
 		Trigger:          "gather-plugin",
 		AutoComplete:     true,
