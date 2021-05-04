@@ -29,3 +29,8 @@ func Remove(slice []string, toRemove string) []string {
 
 	return slice
 }
+
+func Prepend(data []string, item string) []string {
+	data = append([]string{item}, data...)
+	return data
+  }
