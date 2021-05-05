@@ -97,6 +97,18 @@ func (p *Plugin) fillOddUserTurnList() {
 	}
 }
 
+func (p *Plugin) getOddUserInCron() string {
+	availableUsers := p.getAvailableUsers()
+
+	for _, userId := range p.oddUserTurn {
+		if !utils.Contains(p.paused, userId) && utils.Contains(availableUsers, userId) {
+			return userId
+		}
+	}
+
+	return p.oddUserTurn[0]
+}
+
 func (p *Plugin) runMeetings() {
 	p.cleanUsers()
 
@@ -109,7 +121,7 @@ func (p *Plugin) runMeetings() {
 
 	if isOdd {
 		p.fillOddUserTurnList()
-		p.oddUserInCron = p.oddUserTurn[0]
+		p.oddUserInCron = p.getOddUserInCron()
 		p.oddUserTurn = utils.Remove(p.oddUserTurn, p.oddUserInCron)
 		p.oddUserTurn = append(p.oddUserTurn, p.oddUserInCron)
 		p.persistOddUserTurn()
@@ -314,6 +326,7 @@ func (p *Plugin) addUser(userID string) {
 func (p *Plugin) removeUser(userID string) {
 	p.users = utils.Remove(p.users, userID)
 	p.meetInCron = utils.Remove(p.meetInCron, userID)
+	p.oddUserTurn = utils.Remove(p.oddUserTurn, userID)
 	p.removeUserMeetings(userID)
 	p.persistMeetings()
 }
