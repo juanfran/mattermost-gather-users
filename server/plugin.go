@@ -92,7 +92,7 @@ func (p *Plugin) printMeetInCron() {
 func (p *Plugin) fillOddUserTurnList() {
 	for _, userId := range p.users {
 		if !utils.Contains(p.oddUserTurn, userId) {
-			p.oddUserTurn = utils.Prepend(p.oddUserTurn, userId)
+			p.oddUserTurn = append(p.oddUserTurn, userId)
 		}
 	}
 }

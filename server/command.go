@@ -43,9 +43,14 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 
 		msg = "Gather plugin deactivate."
 	} else if split[1] == "pause" {
-		p.paused = append(p.paused, args.UserId)
+		if utils.Contains(p.paused, args.UserId) {
+			p.paused = utils.Remove(p.paused, args.UserId)
+			msg = "Gather plugin unpaused."
+		} else {
+			p.paused = append(p.paused, args.UserId)
+			msg = "Gather plugin paused."
+		}
 		p.persistPausedUsers()
-		msg = "Gather plugin paused."
 	} else if split[1] == "info" {
 		config := p.getConfiguration()
 
