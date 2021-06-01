@@ -142,6 +142,8 @@ func (p *Plugin) runMeetings() {
 
 			if ok {
 				p.startMeeting(userId, userToMeet)
+			} else {
+				usersWithoutPendingMeetings = append(usersWithoutPendingMeetings, userId)
 			}
 		} else {
 			usersWithoutPendingMeetings = append(usersWithoutPendingMeetings, userId)
