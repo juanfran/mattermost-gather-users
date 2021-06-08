@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sync"
+	"sort"
 
 	"github.com/mattermost/mattermost-server/v5/model"
 	"github.com/mattermost/mattermost-server/v5/plugin"
@@ -115,6 +116,7 @@ func (p *Plugin) runMeetings() {
 	p.meetInCron = []string{}
 	p.oddUserInCron = ""
 	usersWithoutPendingMeetings := []string{}
+	usersWithPendingMeetings := []string{}
 
 	availableUsers := p.getAvailableUsers()
 	isOdd := (len(availableUsers) % 2) != 0
@@ -131,6 +133,10 @@ func (p *Plugin) runMeetings() {
 
 	utils.ShuffleUsers(availableUsers)
 
+	sort.SliceStable(availableUsers, func(i, j int) bool {
+		return len(p.usersMeetings[availableUsers[i]]) < len(p.usersMeetings[availableUsers[j]])
+	})
+
 	for _, userId := range availableUsers {
 		_, ok := p.usersMeetings[userId]
 		if !ok {
@@ -143,10 +149,18 @@ func (p *Plugin) runMeetings() {
 			if ok {
 				p.startMeeting(userId, userToMeet)
 			} else {
-				usersWithoutPendingMeetings = append(usersWithoutPendingMeetings, userId)
+				usersWithPendingMeetings = append(usersWithPendingMeetings, userId)
 			}
 		} else {
 			usersWithoutPendingMeetings = append(usersWithoutPendingMeetings, userId)
+		}
+	}
+
+	for _, userId := range usersWithPendingMeetings {
+		userToMeet, ok := p.findAnyUserToMeet(userId)
+
+		if ok {
+			p.startMeeting(userId, userToMeet)
 		}
 	}
 
@@ -217,10 +231,21 @@ func (p *Plugin) findUserToMeet(userID string) (string, bool) {
 		}
 	}
 
-	if !p.hasRemeaningMeetings(userID) &&
-	   len(userMeetings) > 0 &&
-	   !p.isUserInTheCurrentCron(userMeetings[0]) {
-		return userMeetings[0], true
+	// get user from previous meetings
+	userToMeet, ok := p.getUserWithoutMeeting(userMeetings)
+
+	if ok {
+		return userToMeet, true
+	}
+
+	return "", false
+}
+
+func (p *Plugin) getUserWithoutMeeting(users []string) (string, bool) {
+	for _, userId := range users {
+		if !p.isUserInTheCurrentCron(userId) {
+			return userId, true
+		}
 	}
 
 	return "", false
