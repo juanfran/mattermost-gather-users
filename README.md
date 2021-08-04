@@ -27,4 +27,4 @@ In any channel you can use the following command. By default you are not going t
 - `/gather-plugin add @mention` - Add user.
 - `/gather-plugin remove @mention` - Remove user.
 - `/gather-plugin meetings` - Print a JSON string with the previous meetings
-- `/gather-plugin set_meetings [{"user1": ["bruce", "martha"]}]` - Set the meetings that have are already happened.
+- `/gather-plugin set_meetings [{"Alice": ["Bob", "Clara", ...]}, {"Bob": ["Alice", "Clara", ...]}, ...] - Set the meetings that have are already happened.
