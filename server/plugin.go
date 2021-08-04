@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"sync"
 	"sort"
+	"sync"
 
+	"github.com/juanfran/mattermost-gather-users/server/utils"
 	"github.com/mattermost/mattermost-server/v5/model"
 	"github.com/mattermost/mattermost-server/v5/plugin"
 	"github.com/robfig/cron/v3"
-	"github.com/juanfran/mattermost-gather-users/server/utils"
 )
 
 // Plugin implements the interface expected by the Mattermost server to communicate between the server and plugin processes.
@@ -26,9 +26,9 @@ type Plugin struct {
 	cronEntryID cron.EntryID
 
 	users         []string
-	paused         []string
+	paused        []string
 	usersMeetings map[string][]string
-	oddUserTurn []string
+	oddUserTurn   []string
 
 	meetInCron    []string
 	oddUserInCron string
@@ -65,11 +65,18 @@ func (p *Plugin) addCronFunc() {
 	if config.Cron == "custom" && len(config.CustomCron) > 0 {
 		configCron = config.CustomCron
 	}
+	var err error
 
 	// every minute "* * * * *"
-	p.cronEntryID, _ = p.cron.AddFunc(configCron, func() {
+	p.cronEntryID, err = p.cron.AddFunc(configCron, func() {
 		p.runMeetings()
 	})
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// fmt.Println(p.cron.Entries())
 }
 
 func (p *Plugin) hasRemeaningMeetings(userId string) bool {
@@ -183,7 +190,6 @@ func (p *Plugin) runMeetings() {
 	p.persistMeetings()
 }
 
-
 func (p *Plugin) userHasMeetings(userID string) bool {
 	return len(p.usersMeetings[userID]) > 0
 }
@@ -193,7 +199,7 @@ func (p *Plugin) removeUserMeetings(userID string) {
 		p.usersMeetings[i] = utils.Remove(p.usersMeetings[i], userID)
 	}
 
-	delete(p.usersMeetings, userID);
+	delete(p.usersMeetings, userID)
 }
 
 func (p *Plugin) getAvailableUsers() []string {
@@ -268,7 +274,7 @@ func (p *Plugin) findAnyUserToMeet(userID string) (string, bool) {
 	return "", false
 }
 
-func  (p *Plugin) cleanUsers() {
+func (p *Plugin) cleanUsers() {
 	availableUsers := p.getAvailableUsers()
 
 	mettings := make(map[string][]string)
@@ -289,7 +295,7 @@ func  (p *Plugin) cleanUsers() {
 	p.usersMeetings = mettings
 }
 
-func  (p *Plugin) usersMeetingsByUsername() map[string][]string {
+func (p *Plugin) usersMeetingsByUsername() map[string][]string {
 	mettings := make(map[string][]string)
 
 	for _, user := range p.users {

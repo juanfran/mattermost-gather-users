@@ -87,7 +87,7 @@ func (p *Plugin) OnConfigurationChange() error {
 	if p.cronEntryID != 0 {
 		conf := p.getConfiguration()
 
-		if conf.Cron != configuration.Cron {
+		if conf.Cron != configuration.Cron || conf.CustomCron != configuration.CustomCron {
 			dirtyCron = true
 		}
 	}
