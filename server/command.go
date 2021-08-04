@@ -6,9 +6,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/juanfran/mattermost-gather-users/server/utils"
 	"github.com/mattermost/mattermost-server/v5/model"
 	"github.com/mattermost/mattermost-server/v5/plugin"
-	"github.com/juanfran/mattermost-gather-users/server/utils"
 )
 
 // ExecuteCommand run command
@@ -54,7 +54,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 	} else if split[1] == "info" {
 		config := p.getConfiguration()
 
-		if !caller.IsSystemAdmin() && !config.AllowInfoForEveryone  {
+		if !caller.IsSystemAdmin() && !config.AllowInfoForEveryone {
 			return &model.CommandResponse{
 				ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
 				Text:         "Only system admins can do this.",
@@ -67,7 +67,14 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 			if err != nil {
 				return nil, err
 			}
-			lines = append(lines, fmt.Sprintf(" - %s %s (@%s)\n", user.FirstName, user.LastName, user.Username))
+
+			paused := ""
+
+			if utils.Contains(p.paused, user.Id) {
+				paused = " paused"
+			}
+
+			lines = append(lines, fmt.Sprintf(" - %s %s (@%s)"+paused+"\n", user.FirstName, user.LastName, user.Username))
 		}
 
 		sort.Strings(lines)
