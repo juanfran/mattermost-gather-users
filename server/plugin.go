@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/juanfran/mattermost-gather-users/server/utils"
@@ -22,8 +23,7 @@ type Plugin struct {
 	// setConfiguration for usage.
 	configuration *configuration
 
-	cron        *cron.Cron
-	cronEntryID cron.EntryID
+	cron *cron.Cron
 
 	users         []string
 	paused        []string
@@ -50,33 +50,46 @@ func (p *Plugin) UserHasLeftTeam(c *plugin.Context, teamMember *model.TeamMember
 }
 
 func (p *Plugin) refreshCron(configuration *configuration) {
-	p.cron.Remove(p.cronEntryID)
 	p.addCronFunc()
 }
 
 func (p *Plugin) addCronFunc() {
+	if p.cron != nil {
+		p.removeCron()
+	} else {
+		c := cron.New()
+		p.cron = c
+		p.cron.Start()
+	}
+
 	config := p.getConfiguration()
 	configCron := config.Cron
 
 	if configCron == "" {
 		configCron = "@weekly"
 	}
-
 	if config.Cron == "custom" && len(config.CustomCron) > 0 {
 		configCron = config.CustomCron
 	}
-	var err error
+	crontList := strings.Split(configCron, ",")
 
-	// every minute "* * * * *"
-	p.cronEntryID, err = p.cron.AddFunc(configCron, func() {
-		p.runMeetings()
-	})
+	for _, cron := range crontList {
+		var err error
 
-	if err != nil {
-		fmt.Println(err)
+		// every minute "* * * * *"
+		_, err = p.cron.AddFunc(cron, func() {
+			p.runMeetings()
+		})
+
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 
-	// fmt.Println(p.cron.Entries())
+	// for _, entry := range p.cron.Entries() {
+	// 	fmt.Println("entry")
+	// 	fmt.Println(entry.Next)
+	// }
 }
 
 func (p *Plugin) hasRemeaningMeetings(userId string) bool {
@@ -93,8 +106,6 @@ func (p *Plugin) printMeetInCron() {
 		userData, _ := p.API.GetUser(userId)
 		result = append(result, userData.Username)
 	}
-
-	fmt.Println("printMeetInCron", result)
 }
 
 func (p *Plugin) fillOddUserTurnList() {
@@ -364,10 +375,15 @@ func (p *Plugin) removeUser(userID string) {
 	p.persistMeetings()
 }
 
+func (p *Plugin) removeCron() {
+	for _, entry := range p.cron.Entries() {
+		p.cron.Remove(entry.ID)
+	}
+}
+
 // OnDeactivate deactivate plugin
 func (p *Plugin) OnDeactivate() error {
-	p.cron.Remove(p.cronEntryID)
-	p.cron.Stop()
+	p.removeCron()
 
 	return p.persistUsers()
 }

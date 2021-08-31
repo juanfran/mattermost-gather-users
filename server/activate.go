@@ -4,15 +4,10 @@ import (
 	"encoding/json"
 
 	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/robfig/cron/v3"
 )
 
 // OnActivate activate pluguin
 func (p *Plugin) OnActivate() error {
-	c := cron.New()
-	p.cron = c
-	p.cron.Start()
-
 	p.addCronFunc()
 
 	bot := &model.Bot{
@@ -38,7 +33,7 @@ func (p *Plugin) OnActivate() error {
 		if err != nil {
 			p.users = []string{}
 		} else {
-			p.users = users;
+			p.users = users
 		}
 	}
 
@@ -53,7 +48,7 @@ func (p *Plugin) OnActivate() error {
 		if err != nil {
 			p.paused = []string{}
 		} else {
-			p.paused = paused;
+			p.paused = paused
 		}
 	}
 
@@ -71,7 +66,7 @@ func (p *Plugin) OnActivate() error {
 		if err != nil {
 			p.usersMeetings = make(map[string][]string)
 		} else {
-			p.usersMeetings = meetings;
+			p.usersMeetings = meetings
 		}
 	}
 
@@ -89,7 +84,7 @@ func (p *Plugin) OnActivate() error {
 		if err != nil {
 			p.oddUserTurn = []string{}
 		} else {
-			p.oddUserTurn = oddUserTurn;
+			p.oddUserTurn = oddUserTurn
 		}
 	}
 

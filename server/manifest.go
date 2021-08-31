@@ -15,7 +15,7 @@ const manifestStr = `
   "id": "gather-users",
   "name": "Gather users",
   "description": "This plugin pair two user to chat.",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "min_server_version": "5.12.0",
   "server": {
     "executables": {
