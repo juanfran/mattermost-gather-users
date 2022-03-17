@@ -8,7 +8,7 @@ Download the latest version from [releases](https://github.com/juanfran/mattermo
 
 Go to **System Console > Plugins > Management** upload and enable the plugin.
 
-## Settings 
+## Settings
 
 - **Recurrence** - daily, weekly or monthly meetings.
 - **Initial text** - The text that will be send to the users when is time to chat.
@@ -28,3 +28,4 @@ In any channel you can use the following command. By default you are not going t
 - `/gather-plugin remove @mention` - Remove user.
 - `/gather-plugin meetings` - Print a JSON string with the previous meetings
 - `/gather-plugin set_meetings [{"Alice": ["Bob", "Clara", ...]}, {"Bob": ["Alice", "Clara", ...]}, ...] - Set the meetings that have are already happened.
+- `/gather-plugin pause` - Toggle pause my user mettings.
